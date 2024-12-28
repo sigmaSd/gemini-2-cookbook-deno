@@ -7,4 +7,4 @@ to [Deno](https://deno.com)
 Using [Generative AI JS](https://github.com/google-gemini/generative-ai-js)
 
 - get_started.ipynb
-  - Reached "Configure model parameters"
+  - Reached "Function calling"
