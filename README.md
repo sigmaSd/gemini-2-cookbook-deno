@@ -6,5 +6,4 @@ to [Deno](https://deno.com)
 
 Using [Generative AI JS](https://github.com/google-gemini/generative-ai-js)
 
-- get_started.ipynb
-  - Reached "Function calling"
+- [x] get_started.ipynb (100%)
