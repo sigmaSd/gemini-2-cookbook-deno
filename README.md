@@ -33,3 +33,7 @@ There are parts that are blocked waiting for the Multimodal live API
 https://github.com/google-gemini/generative-ai-js/pull/306
 
 Note that the new sdk supports this already.
+
+## Extra
+
+- gemini + mcp demo is availble at ./gemini-mcp.ts
