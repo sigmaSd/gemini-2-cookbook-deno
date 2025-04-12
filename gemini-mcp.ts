@@ -170,7 +170,7 @@ async function mcpToolsToGeminiFunctionDeclaration({
 if (import.meta.main) {
   const transport = new StdioClientTransport({
     command: "deno",
-    args: ["-A", "./server.ts"],
+    args: ["-A", "jsr:@sigmasd/add-mcp-demo"],
     env: Deno.env.toObject(),
   });
   const transport2 = new StdioClientTransport({
