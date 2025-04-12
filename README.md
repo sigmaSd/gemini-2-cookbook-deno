@@ -37,3 +37,6 @@ Note that the new sdk supports this already.
 ## Extra
 
 - gemini + mcp demo is availble at ./gemini-mcp.ts
+
+![image](https://github.com/user-attachments/assets/de3b5c8a-99ec-4d0f-a126-7d5beeb8a9c5)
+
