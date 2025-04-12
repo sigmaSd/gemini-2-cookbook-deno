@@ -1,9 +1,9 @@
-import { Client } from "npm:@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "npm:@modelcontextprotocol/sdk/client/stdio.js";
+import { Client } from "npm:@modelcontextprotocol/sdk@1.8.0/client/index.js";
+import { StdioClientTransport } from "npm:@modelcontextprotocol/sdk@1.8.0/client/stdio.js";
 import {
-  Chat,
-  FunctionDeclaration,
-  GenerateContentResponse,
+  type Chat,
+  type FunctionDeclaration,
+  type GenerateContentResponse,
   GoogleGenAI,
   Type,
 } from "npm:@google/genai@0.7.0";
@@ -87,11 +87,33 @@ async function handleAiResp(
         const result = await mcpClient.callTool({
           name,
           arguments: part.functionCall.args,
-        });
-        const chatResp = await chat.sendMessage({
-          message: { functionResponse: { name, response: result } },
-        });
-        await handleAiResp({ response: chatResp, chat, mcpClient });
+          // deno-lint-ignore no-explicit-any
+        }) as any;
+        let chatResp;
+        for (const content of result.content) {
+          if (content.type === "image") {
+            chatResp = await chat.sendMessage({
+              message: [
+                {
+                  functionResponse: {
+                    name,
+                  },
+                },
+                {
+                  inlineData: {
+                    data: content.data,
+                    mimeType: content.mimeType,
+                  },
+                },
+              ],
+            });
+          } else {
+            chatResp = await chat.sendMessage({
+              message: { functionResponse: { name, response: content } },
+            });
+          }
+          await handleAiResp({ response: chatResp, chat, mcpClient });
+        }
       }
     }
   }
