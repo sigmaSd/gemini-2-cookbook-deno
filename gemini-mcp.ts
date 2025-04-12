@@ -72,10 +72,10 @@ function transformTypes<T>(data: T): T {
 }
 
 async function handleAiResp(
-  { response, chat, mcpClient }: {
+  { response, chat, mcpClients }: {
     response: GenerateContentResponse;
     chat: Chat;
-    mcpClient: Client;
+    mcpClients: Client[];
   },
 ) {
   for (const candidate of response?.candidates ?? []) {
@@ -84,7 +84,24 @@ async function handleAiResp(
       if (part.functionCall) {
         const name = part.functionCall.name;
         assert(name);
-        const result = await mcpClient.callTool({
+        let client;
+        for (const candidate of mcpClients) {
+          for (
+            // deno-lint-ignore no-explicit-any
+            const tool of await (candidate.listTools() as any)
+              // deno-lint-ignore no-explicit-any
+              .then((r: any) => r.tools)
+              // deno-lint-ignore no-explicit-any
+              .then((tools: any) => tools.map((tool: any) => tool.name))
+          ) {
+            if (name === tool) {
+              client = candidate;
+              break;
+            }
+          }
+        }
+        assert(client);
+        const result = await client.callTool({
           name,
           arguments: part.functionCall.args,
           // deno-lint-ignore no-explicit-any
@@ -112,7 +129,7 @@ async function handleAiResp(
               message: { functionResponse: { name, response: content } },
             });
           }
-          await handleAiResp({ response: chatResp, chat, mcpClient });
+          await handleAiResp({ response: chatResp, chat, mcpClients });
         }
       }
     }
@@ -153,9 +170,13 @@ async function mcpToolsToGeminiFunctionDeclaration({
 if (import.meta.main) {
   const transport = new StdioClientTransport({
     command: "deno",
-    // args:["./server.ts"],
-    // args: ["--unstable-kv", "mcp-deno-kv/index.ts"],
-    args: ["jsr:@sigmasd/add-mcp-demo"],
+    args: ["-A", "./server.ts"],
+    env: Deno.env.toObject(),
+  });
+  const transport2 = new StdioClientTransport({
+    command: "deno",
+    args: ["-A", "jsr:@sigmasd/jsr-mcp"],
+    env: Deno.env.toObject(),
   });
 
   const mcpClient = new Client(
@@ -166,6 +187,14 @@ if (import.meta.main) {
   );
 
   await mcpClient.connect(transport);
+  const mcpClient2 = new Client(
+    {
+      name: "myClient2",
+      version: "1.0.0",
+    },
+  );
+
+  await mcpClient2.connect(transport2);
 
   const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
   if (!GEMINI_API_KEY) {
@@ -175,11 +204,18 @@ if (import.meta.main) {
   const geminiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   const MODEL_ID = "gemini-2.0-flash";
 
-  const functionDeclarations = await mcpToolsToGeminiFunctionDeclaration(
-    {
-      mcpClient,
-    },
-  );
+  const functionDeclarations = [
+    ...await mcpToolsToGeminiFunctionDeclaration(
+      {
+        mcpClient,
+      },
+    ),
+    ...await mcpToolsToGeminiFunctionDeclaration(
+      {
+        mcpClient: mcpClient2,
+      },
+    ),
+  ];
 
   const chat = geminiClient.chats.create({
     model: MODEL_ID,
@@ -196,7 +232,7 @@ if (import.meta.main) {
     if (input === ":exit") break;
     const response = await chat.sendMessage({ message: input });
 
-    await handleAiResp({ response, chat, mcpClient });
+    await handleAiResp({ response, chat, mcpClients: [mcpClient, mcpClient2] });
   }
   await mcpClient.close();
 }
