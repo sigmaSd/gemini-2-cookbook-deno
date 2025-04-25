@@ -1,10 +1,10 @@
-import { Client } from "npm:@modelcontextprotocol/sdk@1.8.0/client/index.js";
-import { StdioClientTransport } from "npm:@modelcontextprotocol/sdk@1.8.0/client/stdio.js";
+import { Client } from "npm:@modelcontextprotocol/sdk@1.10.2/client/index.js";
+import { StdioClientTransport } from "npm:@modelcontextprotocol/sdk@1.10.2/client/stdio.js";
 import {
   type Chat,
   type GenerateContentResponse,
   GoogleGenAI,
-} from "npm:@google/genai@0.7.0";
+} from "npm:@google/genai@0.10.0";
 import assert from "node:assert";
 
 async function handleAiResp(
